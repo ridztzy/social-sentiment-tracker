@@ -1,0 +1,10 @@
+{
+  "jobId": "efc81222-9fd1-4e93-81a2-796442f17cb0",
+  "csvPath": "C:\\Users\\MyBook Z Series\\OneDrive\\Desktop\\web_data_mining\\tweets-data\\efc81222-9fd1-4e93-81a2-796442f17cb0-tweets.csv",
+  "appwriteFileId": "695c8a0e001315debd14",
+  "appwriteUrl": "https://sgp.cloud.appwrite.io/v1/storage/buckets/695c577f000b42de6425/files/695c8a0e001315debd14/download?project=695c510b002ed645429c",
+  "createdAt": "2026-01-06T04:05:35.396Z",
+  "searchKeyword": "aceh since:2025-11-06 until:2026-01-06 lang:id",
+  "limit": 500,
+  "tab": "LATEST"
+}
