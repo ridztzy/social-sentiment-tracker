@@ -270,6 +270,9 @@ export default function PlayStorePage() {
           console.log('📡 Backend response status:', backendRes.status);
           const backendData = await backendRes.json();
           
+          console.log('📦 Backend data:', backendData);
+          console.log('🔗 Appwrite URL:', backendData.appwriteUrl);
+          
           if (backendData.ok) {
             console.log('✅ Backend API success!');
             setScrapeRes(backendData);
@@ -606,15 +609,27 @@ export default function PlayStorePage() {
 
                   {/* Download Button */}
                   <div className={`flex justify-center pt-4 border-t ${borderColor}`}>
-                    <a
-                      href={scrapeRes.appwriteUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="h-9 px-4 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 flex items-center gap-2"
-                    >
-                      <Download size={14} />
-                      <span>{t.downloadCsv}</span>
-                    </a>
+                    {scrapeRes.appwriteUrl ? (
+                      <a
+                        href={scrapeRes.appwriteUrl}
+                        download
+                        target="_blank"
+                        rel="noreferrer"
+                        className="h-9 px-4 bg-gray-900 text-white text-sm font-medium rounded-lg hover:bg-gray-800 active:scale-95 transition-transform flex items-center gap-2"
+                      >
+                        <Download size={14} />
+                        <span>{t.downloadCsv}</span>
+                      </a>
+                    ) : (
+                      <button
+                        disabled
+                        className="h-9 px-4 bg-gray-400 text-gray-200 text-sm font-medium rounded-lg cursor-not-allowed flex items-center gap-2"
+                        title={lang === "id" ? "URL download tidak tersedia" : "Download URL not available"}
+                      >
+                        <Download size={14} />
+                        <span>{lang === "id" ? "Download Tidak Tersedia" : "Download Unavailable"}</span>
+                      </button>
+                    )}
                   </div>
                 </>
               )}
