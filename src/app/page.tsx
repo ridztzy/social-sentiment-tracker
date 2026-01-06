@@ -130,13 +130,13 @@ export default function HomePage() {
   ];
 
   return (
-    <div className={`min-h-screen py-10 px-4 transition-colors duration-300 ${bg}`}>
-      <div className="max-w-2xl mx-auto">
+    <div className={`min-h-screen py-6 sm:py-10 px-4 transition-colors duration-300 ${bg}`}>
+      <div className="max-w-4xl mx-auto">
         {/* Header - Same as Twitter page */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-0">
           <div>
-            <h1 className={`text-2xl font-semibold ${textPrimary}`}>{t.title}</h1>
-            <p className={`text-sm mt-1 ${textSecondary}`}>{t.subtitle}</p>
+            <h1 className={`text-xl sm:text-2xl font-semibold ${textPrimary}`}>{t.title}</h1>
+            <p className={`text-xs sm:text-sm mt-1 ${textSecondary}`}>{t.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -156,42 +156,42 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Cards Grid */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
+        {/* Cards Grid - 1 col on mobile, 2 cols on tablet+ */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
           {scrapingSources.map((source) => {
             const Icon = source.icon;
             const isClickable = source.available;
 
             const CardContent = (
-              <div className={`relative rounded-xl p-6 border transition-all duration-300 ${cardBg} ${isClickable ? cardHover + " cursor-pointer hover:shadow-md" : "opacity-60"}`}>
+              <div className={`relative rounded-xl p-4 sm:p-6 border transition-all duration-300 ${cardBg} ${isClickable ? cardHover + " cursor-pointer hover:shadow-md active:scale-[0.98]" : "opacity-60"}`}>
                 {/* Coming Soon Badge */}
                 {source.comingSoon && (
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${dark ? "bg-slate-700 text-slate-300" : "bg-gray-200 text-gray-600"}`}>
                       {t.comingSoon}
                     </span>
                   </div>
                 )}
 
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3 sm:gap-4">
                   {/* Icon */}
-                  <div className={`w-12 h-12 ${source.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
-                    <Icon size={24} className="text-white" />
+                  <div className={`w-10 h-10 sm:w-12 sm:h-12 ${source.color} rounded-xl flex items-center justify-center flex-shrink-0`}>
+                    <Icon size={20} className="text-white sm:w-6 sm:h-6" />
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1">
-                    <h3 className={`text-lg font-semibold mb-1 ${textPrimary}`}>
+                  <div className="flex-1 min-w-0">
+                    <h3 className={`text-base sm:text-lg font-semibold mb-1 ${textPrimary}`}>
                       {source.name}
                     </h3>
-                    <p className={`text-sm ${textSecondary} mb-3`}>
+                    <p className={`text-xs sm:text-sm ${textSecondary} mb-2 sm:mb-3 line-clamp-2`}>
                       {source.description}
                     </p>
 
                     {isClickable && (
-                      <div className="flex items-center gap-2 text-blue-500 text-sm font-medium">
+                      <div className="flex items-center gap-2 text-blue-500 text-xs sm:text-sm font-medium">
                         <span>{t.startScraping}</span>
-                        <ArrowRight size={16} />
+                        <ArrowRight size={14} className="sm:w-4 sm:h-4" />
                       </div>
                     )}
                   </div>
@@ -212,33 +212,33 @@ export default function HomePage() {
         </div>
 
         {/* Features Section */}
-        <div className={`rounded-xl p-6 border mb-4 ${cardBg}`}>
-          <h3 className={`text-base font-semibold mb-4 ${textPrimary}`}>
+        <div className={`rounded-xl p-4 sm:p-6 border mb-4 ${cardBg}`}>
+          <h3 className={`text-sm sm:text-base font-semibold mb-3 sm:mb-4 ${textPrimary}`}>
             ✨ {t.platformFeatures}
           </h3>
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <div className="text-2xl">🚀</div>
-              <div>
-                <h4 className={`font-medium text-sm ${textPrimary}`}>{t.realtimeScraping}</h4>
+              <div className="text-xl sm:text-2xl">🚀</div>
+              <div className="flex-1 min-w-0">
+                <h4 className={`font-medium text-xs sm:text-sm ${textPrimary}`}>{t.realtimeScraping}</h4>
                 <p className={`text-xs mt-0.5 ${textSecondary}`}>
                   {t.realtimeDesc}
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="text-2xl">🤖</div>
-              <div>
-                <h4 className={`font-medium text-sm ${textPrimary}`}>{t.autoPreprocessing}</h4>
+              <div className="text-xl sm:text-2xl">🤖</div>
+              <div className="flex-1 min-w-0">
+                <h4 className={`font-medium text-xs sm:text-sm ${textPrimary}`}>{t.autoPreprocessing}</h4>
                 <p className={`text-xs mt-0.5 ${textSecondary}`}>
                   {t.autoDesc}
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <div className="text-2xl">📊</div>
-              <div>
-                <h4 className={`font-medium text-sm ${textPrimary}`}>{t.dataVisualization}</h4>
+              <div className="text-xl sm:text-2xl">📊</div>
+              <div className="flex-1 min-w-0">
+                <h4 className={`font-medium text-xs sm:text-sm ${textPrimary}`}>{t.dataVisualization}</h4>
                 <p className={`text-xs mt-0.5 ${textSecondary}`}>
                   {t.dataVizDesc}
                 </p>

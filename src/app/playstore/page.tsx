@@ -249,15 +249,18 @@ export default function PlayStorePage() {
       // FALLBACK: Try backend API (Render/Railway)
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       
+      console.log('🔍 Backend URL configured:', backendUrl || 'NOT SET');
+      
       if (backendUrl) {
         try {
-          console.log('🔄 Trying backend API (Render)...');
-          const backendRes = await fetch(`${backendUrl}/api/scrape-playstore`, {
+          console.log('🔄 Trying backend API:', `/backend-api/api/scrape-playstore`);
+          const backendRes = await fetch(`/backend-api/api/scrape-playstore`, {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify(payload),
           });
 
+          console.log('📡 Backend response status:', backendRes.status);
           const backendData = await backendRes.json();
           
           if (backendData.ok) {
@@ -269,17 +272,26 @@ export default function PlayStorePage() {
         } catch (backendError) {
           console.error('❌ Backend API also failed:', backendError);
           const message = backendError instanceof Error ? backendError.message : "Unknown error";
+          
+          // Enhanced error message with debugging info
+          const debugInfo = lang === "id" 
+            ? `\n\n🔍 Debug Info:\n- Frontend API: Gagal (Simulasi error)\n- Backend URL: ${backendUrl || 'TIDAK DISET'}\n- Backend Error: ${message}\n\n💡 Kemungkinan penyebab:\n1. Backend server tidak running\n2. URL backend salah\n3. CORS issue\n4. Network error` 
+            : `\n\n🔍 Debug Info:\n- Frontend API: Failed (Simulated error)\n- Backend URL: ${backendUrl || 'NOT SET'}\n- Backend Error: ${message}\n\n💡 Possible causes:\n1. Backend server not running\n2. Wrong backend URL\n3. CORS issue\n4. Network error`;
+          
           setScrapeRes({ 
             ok: false, 
-            error: lang === "id" 
+            error: (lang === "id" 
               ? `Kedua server gagal. Error: ${message}` 
-              : `Both servers failed. Error: ${message}`
+              : `Both servers failed. Error: ${message}`) + debugInfo
           });
         }
       } else {
         // No backend URL configured, show frontend error only
         const message = frontendError instanceof Error ? frontendError.message : "Unknown error";
-        setScrapeRes({ ok: false, error: message });
+        const warning = lang === "id"
+          ? `\n\n⚠️ NEXT_PUBLIC_BACKEND_URL tidak diset di .env.local\n\nTambahkan:\nNEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com`
+          : `\n\n⚠️ NEXT_PUBLIC_BACKEND_URL not set in .env.local\n\nAdd:\nNEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com`;
+        setScrapeRes({ ok: false, error: message + warning });
       }
     }
 
@@ -287,55 +299,58 @@ export default function PlayStorePage() {
   }
 
   return (
-    <div className={`min-h-screen py-10 px-4 transition-colors duration-300 ${bg}`}>
-      <div className="max-w-2xl mx-auto">
+    <div className={`min-h-screen py-6 sm:py-10 px-4 transition-colors duration-300 ${bg}`}>
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="mb-8 flex items-start justify-between">
-          <div className="flex items-start gap-3">
-            <Link href="/">
-              <button
-                className={`p-2 rounded-lg border transition-colors ${cardBg} hover:bg-opacity-80`}
-                title={lang === "id" ? "Kembali" : "Back"}
-              >
-                <ArrowLeft size={16} className={textSecondary} />
-              </button>
-            </Link>
-            <div>
-              <h1 className={`text-2xl font-semibold ${textPrimary}`}>{t.title}</h1>
-              <p className={`text-sm mt-1 ${textSecondary}`}>{t.subtitle}</p>
+        <div className="mb-6 sm:mb-8">
+          {/* Top row: Back button + Title | Dark/Lang buttons */}
+          <div className="flex items-start justify-between mb-3 sm:mb-0">
+            <div className="flex items-start gap-2 sm:gap-3 flex-1">
+              <Link href="/">
+                <button
+                  className={`p-2 rounded-lg border transition-colors ${cardBg} hover:bg-opacity-80 active:scale-95`}
+                  title={lang === "id" ? "Kembali" : "Back"}
+                >
+                  <ArrowLeft size={16} className={textSecondary} />
+                </button>
+              </Link>
+              <div className="flex-1 min-w-0">
+                <h1 className={`text-lg sm:text-2xl font-semibold ${textPrimary}`}>{t.title}</h1>
+                <p className={`text-xs sm:text-sm mt-0.5 sm:mt-1 ${textSecondary}`}>{t.subtitle}</p>
+              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setDark(!dark)}
-              className={`p-2 rounded-lg border transition-colors ${cardBg}`}
-              title={dark ? "Light Mode" : "Dark Mode"}
-            >
-              {dark ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} className={textSecondary} />}
-            </button>
-            <button
-              onClick={() => setLang(lang === "id" ? "en" : "id")}
-              className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors ${cardBg} ${textPrimary}`}
-            >
-              <Globe size={14} />
-              <span>{lang === "id" ? "EN" : "ID"}</span>
-            </button>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button
+                onClick={() => setDark(!dark)}
+                className={`p-2 rounded-lg border transition-colors ${cardBg} active:scale-95`}
+                title={dark ? "Light Mode" : "Dark Mode"}
+              >
+                {dark ? <Sun size={16} className="text-yellow-400" /> : <Moon size={16} className={textSecondary} />}
+              </button>
+              <button
+                onClick={() => setLang(lang === "id" ? "en" : "id")}
+                className={`flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border transition-colors ${cardBg} ${textPrimary} active:scale-95`}
+              >
+                <Globe size={14} />
+                <span>{lang === "id" ? "EN" : "ID"}</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Form Section */}
-        <div className={`rounded-xl p-6 mb-4 border ${cardBg}`}>
-          <div className={`flex items-center gap-3 mb-5 pb-4 border-b ${borderColor}`}>
-            <div className="w-9 h-9 bg-green-600 rounded-lg flex items-center justify-center">
-              <ShoppingBag size={18} className="text-white" />
+        <div className={`rounded-xl p-4 sm:p-6 mb-4 border ${cardBg}`}>
+          <div className={`flex items-center gap-3 mb-4 sm:mb-5 pb-3 sm:pb-4 border-b ${borderColor}`}>
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-green-600 rounded-lg flex items-center justify-center shrink-0">
+              <ShoppingBag size={16} className="text-white sm:w-[18px] sm:h-[18px]" />
             </div>
-            <h2 className={`text-base font-semibold ${textPrimary}`}>{t.dataCollection}</h2>
+            <h2 className={`text-sm sm:text-base font-semibold ${textPrimary}`}>{t.dataCollection}</h2>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             {/* Input Mode Toggle */}
             <div>
-              <label className={`block text-sm font-medium mb-2 ${textPrimary}`}>{t.inputMode}</label>
+              <label className={`block text-xs sm:text-sm font-medium mb-2 ${textPrimary}`}>{t.inputMode}</label>
               <div className="flex gap-2">
                 <button
                   onClick={() => {
@@ -343,14 +358,14 @@ export default function PlayStorePage() {
                     setAppId("");
                     setSelectedApp(null);
                   }}
-                  className={`flex-1 h-10 px-4 text-sm font-medium rounded-lg border transition-colors flex items-center justify-center gap-2 ${
+                  className={`flex-1 h-10 sm:h-11 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-lg border transition-colors flex items-center justify-center gap-2 active:scale-95 ${
                     inputMode === "search"
                       ? "bg-green-600 text-white border-green-600"
                       : `${inputBg} ${textPrimary} hover:bg-opacity-80`
                   }`}
                 >
-                  <Search size={16} />
-                  {t.searchByName}
+                  <Search size={16} className="shrink-0" />
+                  <span className="truncate">{t.searchByName}</span>
                 </button>
                 <button
                   onClick={() => {
@@ -360,14 +375,14 @@ export default function PlayStorePage() {
                     setShowResults(false);
                     setSelectedApp(null);
                   }}
-                  className={`flex-1 h-10 px-4 text-sm font-medium rounded-lg border transition-colors flex items-center justify-center gap-2 ${
+                  className={`flex-1 h-10 sm:h-11 px-3 sm:px-4 text-xs sm:text-sm font-medium rounded-lg border transition-colors flex items-center justify-center gap-2 active:scale-95 ${
                     inputMode === "direct"
                       ? "bg-green-600 text-white border-green-600"
                       : `${inputBg} ${textPrimary} hover:bg-opacity-80`
                   }`}
                 >
-                  <Package size={16} />
-                  {t.directInput}
+                  <Package size={16} className="shrink-0" />
+                  <span className="truncate">{t.directInput}</span>
                 </button>
               </div>
             </div>
@@ -488,13 +503,13 @@ export default function PlayStorePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label className={`block text-sm font-medium mb-1.5 ${textPrimary}`}>{t.filterRating}</label>
+                <label className={`block text-xs sm:text-sm font-medium mb-1.5 ${textPrimary}`}>{t.filterRating}</label>
                 <select
                   value={rating}
                   onChange={(e) => setRating(e.target.value)}
-                  className={`w-full h-10 px-3 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 ${inputBg}`}
+                  className={`w-full h-10 sm:h-11 px-3 text-xs sm:text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 ${inputBg}`}
                 >
                   <option value="all">{t.allRatings}</option>
                   <option value="5">{t.fiveStars}</option>
@@ -505,11 +520,11 @@ export default function PlayStorePage() {
                 </select>
               </div>
               <div>
-                <label className={`block text-sm font-medium mb-1.5 ${textPrimary}`}>{t.sortBy}</label>
+                <label className={`block text-xs sm:text-sm font-medium mb-1.5 ${textPrimary}`}>{t.sortBy}</label>
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value)}
-                  className={`w-full h-10 px-3 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 ${inputBg}`}
+                  className={`w-full h-10 sm:h-11 px-3 text-xs sm:text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 ${inputBg}`}
                 >
                   <option value="newest">{t.newest}</option>
                   <option value="rating">{t.highRating}</option>
@@ -521,9 +536,9 @@ export default function PlayStorePage() {
             <button
               onClick={runScrape}
               disabled={loading}
-              className="w-full h-11 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full h-11 sm:h-12 bg-green-600 text-white text-sm sm:text-base font-medium rounded-lg hover:bg-green-700 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 transition-transform"
             >
-              {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <ShoppingBag size={16} />}
+              {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <ShoppingBag size={18} />}
               <span>{loading ? t.scraping : t.scrapeReviews}</span>
             </button>
           </div>
@@ -720,8 +735,10 @@ function DataTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-xs">
+      <div className="overflow-x-auto -mx-4 sm:mx-0">
+        <div className="inline-block min-w-full align-middle">
+          <div className="overflow-hidden">
+            <table className="min-w-full text-xs">
           <thead className={`${subtleBg} sticky top-0`}>
             <tr>
               {columns.map((col) => (
@@ -750,7 +767,9 @@ function DataTable({
               </tr>
             ))}
           </tbody>
-        </table>
+            </table>
+          </div>
+        </div>
       </div>
 
       <div className={`p-4 border-t ${borderColor} flex items-center justify-between text-xs`}>

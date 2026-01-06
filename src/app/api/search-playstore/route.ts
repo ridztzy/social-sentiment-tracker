@@ -28,8 +28,8 @@ export async function GET(req: NextRequest) {
     const results = await gplay.search({
       term: query.trim(),
       num: 10, // Limit to top 10 results
-      lang: 'en',
-      country: 'us',
+      lang: 'id',
+      country: 'id',
     });
 
     if (!results || results.length === 0) {
