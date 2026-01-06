@@ -213,24 +213,74 @@ export default function PlayStorePage() {
     setLoading(true);
     setScrapeRes(null);
 
+    const payload = {
+      appId: appId.trim(),
+      limit,
+      rating,
+      sort,
+      lang,
+    };
+
     try {
+      // PRIMARY: Try frontend API route first (Vercel serverless)
+      console.log('⚡ Trying frontend API (Vercel)...');
       const res = await fetch("/api/scrape-playstore", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          appId: appId.trim(),
-          limit,
-          rating,
-          sort,
-          lang,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      setScrapeRes(data);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setScrapeRes({ ok: false, error: message });
+      
+      // If successful, use it
+      if (data.ok) {
+        console.log('✅ Frontend API success!');
+        setScrapeRes(data);
+        setLoading(false);
+        return;
+      }
+      
+      // If frontend returns error, throw to trigger fallback
+      throw new Error(data.error || 'Frontend API failed');
+
+    } catch (frontendError) {
+      console.warn('⚠️ Frontend API failed:', frontendError);
+      
+      // FALLBACK: Try backend API (Render/Railway)
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      
+      if (backendUrl) {
+        try {
+          console.log('🔄 Trying backend API (Render)...');
+          const backendRes = await fetch(`${backendUrl}/api/scrape-playstore`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const backendData = await backendRes.json();
+          
+          if (backendData.ok) {
+            console.log('✅ Backend API success!');
+            setScrapeRes(backendData);
+          } else {
+            throw new Error(backendData.error || 'Backend API failed');
+          }
+        } catch (backendError) {
+          console.error('❌ Backend API also failed:', backendError);
+          const message = backendError instanceof Error ? backendError.message : "Unknown error";
+          setScrapeRes({ 
+            ok: false, 
+            error: lang === "id" 
+              ? `Kedua server gagal. Error: ${message}` 
+              : `Both servers failed. Error: ${message}`
+          });
+        }
+      } else {
+        // No backend URL configured, show frontend error only
+        const message = frontendError instanceof Error ? frontendError.message : "Unknown error";
+        setScrapeRes({ ok: false, error: message });
+      }
     }
 
     setLoading(false);
