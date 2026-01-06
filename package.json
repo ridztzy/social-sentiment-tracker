@@ -16,6 +16,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "recharts": "^3.6.0",
+    "tweet-harvest": "^2.6.1",
     "zod": "^4.3.5"
   },
   "devDependencies": {
@@ -27,7 +28,6 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4",
-    "tweet-harvest": "^2.6.1",
     "typescript": "^5"
   }
 }
