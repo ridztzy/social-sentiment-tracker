@@ -253,8 +253,15 @@ export default function PlayStorePage() {
       
       if (backendUrl) {
         try {
-          console.log('🔄 Trying backend API:', `/backend-api/api/scrape-playstore`);
-          const backendRes = await fetch(`/backend-api/api/scrape-playstore`, {
+          // In development (localhost): use proxy to avoid CORS
+          // In production (Vercel): call backend directly (proxy doesn't work)
+          const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+          const apiUrl = isLocalhost 
+            ? '/backend-api/api/scrape-playstore'  // Use proxy in dev
+            : `${backendUrl}/api/scrape-playstore`; // Direct call in production
+          
+          console.log('🔄 Trying backend API:', apiUrl);
+          const backendRes = await fetch(apiUrl, {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify(payload),
