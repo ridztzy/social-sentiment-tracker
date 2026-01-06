@@ -1,0 +1,10 @@
+{
+  "jobId": "a8e43f4d-709c-4448-bf91-e10ae4a73684",
+  "csvPath": "C:\\Users\\MyBook Z Series\\OneDrive\\Desktop\\web_data_mining\\tweets-data\\a8e43f4d-709c-4448-bf91-e10ae4a73684-tweets.csv",
+  "appwriteFileId": "695c5f02002f5266ac24",
+  "appwriteUrl": "https://sgp.cloud.appwrite.io/v1/storage/buckets/695c577f000b42de6425/files/695c5f02002f5266ac24/download?project=695c510b002ed645429c",
+  "createdAt": "2026-01-06T01:01:55.557Z",
+  "searchKeyword": "sepakbola since:2026-01-03 until:2026-01-06 lang:id",
+  "limit": 25,
+  "tab": "LATEST"
+}
