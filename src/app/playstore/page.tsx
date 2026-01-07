@@ -3,109 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ShoppingBag, Download, Check, X, ArrowLeft, Globe, Moon, Sun, Search, Package } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-// Translations
-const translations = {
-  id: {
-    title: "Analisis Ulasan Play Store",
-    subtitle: "Scraping & analisis sentiment ulasan aplikasi",
-    dataCollection: "Pengumpulan Data",
-    appId: "App ID / Package Name",
-    appIdPlaceholder: "Contoh: com.whatsapp atau com.instagram.android",
-    reviewCount: "Jumlah Reviews",
-    filterRating: "Filter Rating",
-    sortBy: "Urutkan",
-    allRatings: "Semua Rating",
-    fiveStars: "5 Bintang",
-    fourStars: "4 Bintang",
-    threeStars: "3 Bintang",
-    twoStars: "2 Bintang",
-    oneStar: "1 Bintang",
-    newest: "Terbaru",
-    mostHelpful: "Paling Membantu",
-    highRating: "Rating Tertinggi",
-    scraping: "Scraping...",
-    scrapeReviews: "Scrape Reviews",
-    collected: "Berhasil mengumpulkan",
-    reviews: "reviews",
-    error: "Error",
-    downloadCsv: "Unduh CSV",
-    ratingDistribution: "Distribusi Rating",
-    avgRating: "Rating Rata-rata",
-    showPreview: "Tampilkan Preview",
-    hidePreview: "Tutup Preview",
-    // New search-related translations
-    inputMode: "Mode Input",
-    searchByName: "Cari Nama App",
-    directInput: "Input Langsung",
-    searchPlaceholder: "Ketik nama app, contoh: TikTok",
-    selectApp: "Pilih aplikasi dari hasil",
-    searching: "Mencari...",
-    noResults: "Tidak ada hasil ditemukan",
-    searchResults: "Hasil Pencarian",
-  },
-  en: {
-    title: "Play Store Reviews Analysis",
-    subtitle: "Scraping & sentiment analysis of app reviews",
-    dataCollection: "Data Collection",
-    appId: "App ID / Package Name",
-    appIdPlaceholder: "e.g: com.whatsapp or com.instagram.android",
-    reviewCount: "Number of Reviews",
-    filterRating: "Filter Rating",
-    sortBy: "Sort By",
-    allRatings: "All Ratings",
-    fiveStars: "5 Stars",
-    fourStars: "4 Stars",
-    threeStars: "3 Stars",
-    twoStars: "2 Stars",
-    oneStar: "1 Star",
-    newest: "Newest",
-    mostHelpful: "Most Helpful",
-    highRating: "Highest Rating",
-    scraping: "Scraping...",
-    scrapeReviews: "Scrape Reviews",
-    collected: "Successfully collected",
-    reviews: "reviews",
-    error: "Error",
-    downloadCsv: "Download CSV",
-    ratingDistribution: "Rating Distribution",
-    avgRating: "Average Rating",
-    showPreview: "Show Preview",
-    hidePreview: "Hide Preview",
-    // New search-related translations
-    inputMode: "Input Mode",
-    searchByName: "Search App Name",
-    directInput: "Direct Input",
-    searchPlaceholder: "Type app name, e.g: TikTok",
-    selectApp: "Select app from results",
-    searching: "Searching...",
-    noResults: "No results found",
-    searchResults: "Search Results",
-  },
-};
-
-interface ScrapeResult {
-  ok: boolean;
-  jobId?: string;
-  count?: number;
-  appwriteFileId?: string;
-  appwriteUrl?: string;
-  preview?: Record<string, unknown>[];
-  stats?: {
-    avgRating: number;
-    ratingDistribution: Record<string, number>;
-  };
-  error?: string;
-}
-
-interface AppSearchResult {
-  appId: string;
-  title: string;
-  icon: string;
-  scoreText: string;
-  developer: string;
-}
+import { ScrapeResult, AppSearchResult } from "./types";
+import { translations } from "./translations";
+import RatingChart from "./components/RatingChart";
+import DataTable from "./components/DataTable";
 
 export default function PlayStorePage() {
   // Language
@@ -158,6 +59,8 @@ export default function PlayStorePage() {
   const [scrapeRes, setScrapeRes] = useState<ScrapeResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+
+
 
   // Debounced search effect
   useEffect(() => {
@@ -222,87 +125,55 @@ export default function PlayStorePage() {
     };
 
     try {
-      // PRIMARY: Try frontend API route first (Vercel serverless)
-      console.log('⚡ Trying frontend API (Vercel)...');
-      const res = await fetch("/api/scrape-playstore", {
+      // Call backend API directly
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+      
+      if (!backendUrl) {
+        const warning = lang === "id"
+          ? "⚠️ NEXT_PUBLIC_BACKEND_URL tidak diset di .env.local\n\nTambahkan:\nNEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com"
+          : "⚠️ NEXT_PUBLIC_BACKEND_URL not set in .env.local\n\nAdd:\nNEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com";
+        setScrapeRes({ ok: false, error: warning });
+        setLoading(false);
+        return;
+      }
+
+      // In development (localhost): use proxy to avoid CORS
+      // In production (Vercel): call backend directly (proxy doesn't work)
+      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+      const apiUrl = isLocalhost 
+        ? '/backend-api/api/scrape-playstore'  // Use proxy in dev
+        : `${backendUrl}/api/scrape-playstore`; // Direct call in production
+      
+      console.log('🔄 Calling backend API:', apiUrl);
+      const res = await fetch(apiUrl, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(payload),
       });
 
+      console.log('📡 Backend response status:', res.status);
       const data = await res.json();
       
-      // If successful, use it
+      console.log('📦 Backend data:', data);
+      
       if (data.ok) {
-        console.log('✅ Frontend API success!');
+        console.log('✅ Backend API success!');
         setScrapeRes(data);
-        setLoading(false);
-        return;
-      }
-      
-      // If frontend returns error, throw to trigger fallback
-      throw new Error(data.error || 'Frontend API failed');
-
-    } catch (frontendError) {
-      console.warn('⚠️ Frontend API failed:', frontendError);
-      
-      // FALLBACK: Try backend API (Render/Railway)
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      
-      console.log('🔍 Backend URL configured:', backendUrl || 'NOT SET');
-      
-      if (backendUrl) {
-        try {
-          // In development (localhost): use proxy to avoid CORS
-          // In production (Vercel): call backend directly (proxy doesn't work)
-          const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-          const apiUrl = isLocalhost 
-            ? '/backend-api/api/scrape-playstore'  // Use proxy in dev
-            : `${backendUrl}/api/scrape-playstore`; // Direct call in production
-          
-          console.log('🔄 Trying backend API:', apiUrl);
-          const backendRes = await fetch(apiUrl, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify(payload),
-          });
-
-          console.log('📡 Backend response status:', backendRes.status);
-          const backendData = await backendRes.json();
-          
-          console.log('📦 Backend data:', backendData);
-          console.log('🔗 Appwrite URL:', backendData.appwriteUrl);
-          
-          if (backendData.ok) {
-            console.log('✅ Backend API success!');
-            setScrapeRes(backendData);
-          } else {
-            throw new Error(backendData.error || 'Backend API failed');
-          }
-        } catch (backendError) {
-          console.error('❌ Backend API also failed:', backendError);
-          const message = backendError instanceof Error ? backendError.message : "Unknown error";
-          
-          // Enhanced error message with debugging info
-          const debugInfo = lang === "id" 
-            ? `\n\n🔍 Debug Info:\n- Frontend API: Gagal (Simulasi error)\n- Backend URL: ${backendUrl || 'TIDAK DISET'}\n- Backend Error: ${message}\n\n💡 Kemungkinan penyebab:\n1. Backend server tidak running\n2. URL backend salah\n3. CORS issue\n4. Network error` 
-            : `\n\n🔍 Debug Info:\n- Frontend API: Failed (Simulated error)\n- Backend URL: ${backendUrl || 'NOT SET'}\n- Backend Error: ${message}\n\n💡 Possible causes:\n1. Backend server not running\n2. Wrong backend URL\n3. CORS issue\n4. Network error`;
-          
-          setScrapeRes({ 
-            ok: false, 
-            error: (lang === "id" 
-              ? `Kedua server gagal. Error: ${message}` 
-              : `Both servers failed. Error: ${message}`) + debugInfo
-          });
-        }
       } else {
-        // No backend URL configured, show frontend error only
-        const message = frontendError instanceof Error ? frontendError.message : "Unknown error";
-        const warning = lang === "id"
-          ? `\n\n⚠️ NEXT_PUBLIC_BACKEND_URL tidak diset di .env.local\n\nTambahkan:\nNEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com`
-          : `\n\n⚠️ NEXT_PUBLIC_BACKEND_URL not set in .env.local\n\nAdd:\nNEXT_PUBLIC_BACKEND_URL=https://your-backend.onrender.com`;
-        setScrapeRes({ ok: false, error: message + warning });
+        throw new Error(data.error || 'Backend API failed');
       }
+    } catch (error) {
+      console.error('❌ Backend API failed:', error);
+      const message = error instanceof Error ? error.message : "Unknown error";
+      
+      const debugInfo = lang === "id" 
+        ? `\n\n💡 Kemungkinan penyebab:\n1. Backend server tidak running\n2. URL backend salah\n3. CORS issue\n4. Network error` 
+        : `\n\n💡 Possible causes:\n1. Backend server not running\n2. Wrong backend URL\n3. CORS issue\n4. Network error`;
+      
+      setScrapeRes({ 
+        ok: false, 
+        error: `${lang === "id" ? "Error" : "Error"}: ${message}${debugInfo}`
+      });
     }
 
     setLoading(false);
@@ -607,9 +478,11 @@ export default function PlayStorePage() {
                     </>
                   )}
 
+
                   {/* Download Button */}
                   <div className={`flex justify-center pt-4 border-t ${borderColor}`}>
                     {scrapeRes.appwriteUrl ? (
+                      // Download from Appwrite (backend)
                       <a
                         href={scrapeRes.appwriteUrl}
                         download
@@ -621,10 +494,11 @@ export default function PlayStorePage() {
                         <span>{t.downloadCsv}</span>
                       </a>
                     ) : (
+                      // No download URL available
                       <button
                         disabled
                         className="h-9 px-4 bg-gray-400 text-gray-200 text-sm font-medium rounded-lg cursor-not-allowed flex items-center gap-2"
-                        title={lang === "id" ? "URL download tidak tersedia" : "Download URL not available"}
+                        title={lang === "id" ? "Data tidak tersedia" : "Data not available"}
                       >
                         <Download size={14} />
                         <span>{lang === "id" ? "Download Tidak Tersedia" : "Download Unavailable"}</span>
@@ -641,192 +515,4 @@ export default function PlayStorePage() {
   );
 }
 
-function RatingChart({ 
-  data, 
-  dark 
-}: { 
-  data: Record<string, number>; 
-  dark: boolean; 
-}) {
-  const chartData = Object.keys(data).sort().map(key => ({
-    rating: `${key} ⭐`,
-    count: data[key],
-  }));
 
-  return (
-    <div className="h-48">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={chartData}>
-          <CartesianGrid 
-            strokeDasharray="3 3" 
-            stroke={dark ? "#334155" : "#e5e7eb"}
-          />
-          <XAxis 
-            dataKey="rating" 
-            stroke={dark ? "#94a3b8" : "#6b7280"}
-            style={{ fontSize: "12px" }}
-          />
-          <YAxis 
-            stroke={dark ? "#94a3b8" : "#6b7280"}
-            style={{ fontSize: "12px" }}
-          />
-          <Tooltip 
-            contentStyle={{ 
-              backgroundColor: dark ? "#1e293b" : "#ffffff",
-              border: `1px solid ${dark ? "#334155" : "#e5e7eb"}`,
-              borderRadius: "8px",
-              color: dark ? "#f1f5f9" : "#1f2937"
-            }}
-          />
-          <Bar dataKey="count" fill="#10b981" radius={[8, 8, 0, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
-function DataTable({
-  data,
-  dark,
-  textPrimary,
-  textSecondary,
-  cardBg,
-  inputBg,
-  borderColor,
-  subtleBg,
-}: {
-  data: Record<string, unknown>[];
-  dark: boolean;
-  textPrimary: string;
-  textSecondary: string;
-  cardBg: string;
-  inputBg: string;
-  borderColor: string;
-  subtleBg: string;
-}) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(25);
-
-  if (!data || data.length === 0) return null;
-
-  const columns = Object.keys(data[0]);
-
-  const filteredData = data.filter((row) => {
-    if (!searchTerm) return true;
-    return columns.some((col) => {
-      const value = String(row[col] ?? "").toLowerCase();
-      return value.includes(searchTerm.toLowerCase());
-    });
-  });
-
-  const totalPages = Math.ceil(filteredData.length / rowsPerPage);
-  const startIdx = (currentPage - 1) * rowsPerPage;
-  const endIdx = startIdx + rowsPerPage;
-  const paginatedData = filteredData.slice(startIdx, endIdx);
-
-  return (
-    <div className={`rounded-lg mt-4 ${cardBg} border`}>
-      <div className="p-4 border-b ${borderColor}">
-        <div className="flex items-center justify-between gap-4 flex-wrap">
-          <h4 className={`text-sm font-semibold ${textPrimary}`}>📊 Preview Data ({filteredData.length} records)</h4>
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              className={`h-8 px-3 text-xs rounded-lg border focus:outline-none focus:ring-2 focus:ring-green-500 ${inputBg}`}
-            />
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className={`h-8 px-2 text-xs rounded-lg border focus:outline-none ${inputBg}`}
-            >
-              <option value={10}>10 rows</option>
-              <option value={25}>25 rows</option>
-              <option value={50}>50 rows</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div className="overflow-x-auto -mx-4 sm:mx-0">
-        <div className="inline-block min-w-full align-middle">
-          <div className="overflow-hidden">
-            <table className="min-w-full text-xs">
-          <thead className={`${subtleBg} sticky top-0`}>
-            <tr>
-              {columns.map((col) => (
-                <th
-                  key={col}
-                  className={`px-4 py-2 text-left font-semibold ${textPrimary}`}
-                >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedData.map((row, idx) => (
-              <tr
-                key={idx}
-                className={`${dark ? "hover:bg-slate-700" : "hover:bg-gray-50"} ${idx % 2 === 0 ? "" : dark ? "bg-slate-800/50" : "bg-gray-50/50"}`}
-              >
-                {columns.map((col) => (
-                  <td key={col} className={`px-4 py-2 ${textSecondary}`}>
-                    <div className="max-w-xs truncate" title={String(row[col] ?? "")}>
-                      {String(row[col] ?? "")}
-                    </div>
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <div className={`p-4 border-t ${borderColor} flex items-center justify-between text-xs`}>
-        <div className={textSecondary}>
-          Showing {startIdx + 1}-{Math.min(endIdx, filteredData.length)} of {filteredData.length}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 rounded border ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : "hover:bg-opacity-80"} ${inputBg}`}
-          >
-            Previous
-          </button>
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            const page = i + 1;
-            return (
-              <button
-                key={page}
-                onClick={() => setCurrentPage(page)}
-                className={`px-3 py-1 rounded border ${currentPage === page ? dark ? "bg-green-600 text-white" : "bg-green-500 text-white" : inputBg}`}
-              >
-                {page}
-              </button>
-            );
-          })}
-          <button
-            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1 rounded border ${currentPage === totalPages ? "opacity-50 cursor-not-allowed" : "hover:bg-opacity-80"} ${inputBg}`}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
